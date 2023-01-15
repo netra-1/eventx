@@ -1,13 +1,66 @@
 import "./add_venue.scss";
-import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoMdCloudUpload } from "react-icons/io";
+import { Link, useParams } from "react-router-dom";
+
+function initialPriceState(from, to, amount) {
+  return {
+    paxRange: {
+      from,
+      to,
+    },
+    amount,
+  };
+}
+
+const initialFormState = {
+  name: "",
+  capacity: {
+    max: null,
+    min: null,
+  },
+  contact: "",
+  location: "",
+  remarks: "",
+  price: [
+    {
+      paxRange: {
+        from: null,
+        to: null,
+      },
+      amount: null,
+    },
+  ],
+  established: null,
+  spaceIndooor: false,
+  spaceOutdoor: false,
+  venueType: "",
+  additionalService: {
+    dj: null,
+    spaceOnly: null,
+  },
+};
 
 const UpdateVenue = () => {
   const { venueId } = useParams();
+  const [formState, setFormState] = useState(initialFormState);
+  // const [priceState, setPriceState] = useState(initialPriceState);
+  const [listPrice, setListPrice] = useState([]);
+
+  const [image, setImage] = useState("");
+  const [spaceIndooor, setSpaceIndoor] = useState("");
+  const [spaceOutdoor, setSpaceOutdoor] = useState("");
+  const [venueType, setVenueType] = useState("");
+
+  const [priceFrom, setFrom] = useState("");
+  const [priceTo, setTo] = useState("");
+  const [priceAmount, setAmount] = useState("");
+
+  var isSpaceIndoor = spaceIndooor === "true";
+  var isSpaceOutdoor = spaceOutdoor === "true";
 
   const config = {
     headers: {
@@ -15,82 +68,603 @@ const UpdateVenue = () => {
     },
   };
 
-  const [venue_name, setVenue] = useState("");
-  const [description, setDescription] = useState("");
+  useEffect(()=>{
+    axios.get("http://localhost:8000/admin/venue/" + venueId, config)
+    .then((response)=>{
+      const data = response.data.data
+      const capacity = data.capacity
+      const additionalService = data.additionalService
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:90/venue/display_single/" + venueId)
-      .then((response) => {
-        console.log(response);
-        setVenue(response.data.data.venue_name);
-        setDescription(response.data.data.description);
-      })
-      .catch((e) => {
+      // const nameArr = profile.fullName.split(' ')
+
+      if (additionalService != null){
+        setFormState(prevState => ({
+          ...prevState,
+          remarks: data.remarks,
+          name: data.name,
+          max: capacity.max || null,
+          min: capacity.min || null,
+          dj: additionalService.dj || null,
+          spaceOnly: additionalService.spaceOnly || null,
+          contact: data.contact,
+          location: data.location,
+          price: data.price,
+          established: data.established  || null
+        }))  
+      } else{
+        setFormState(prevState => ({
+          ...prevState,
+          remarks: data.remarks,
+          name: data.name,
+          max: capacity.max || null,
+          min: capacity.min || null,
+          contact: data.contact,
+          location: data.location,
+          price: data.price,
+          established: data.established  || null
+        })) 
+      }
+
+      
+      // if(data.image?.url){
+      //   setProfileImage(data.image)
+      // }
+    })
+    .catch((e)=>{
         console.log(e);
-      });
-  }, []);
+    })
+  },[])
 
   const handleClick = async (e) => {
     e.preventDefault();
-    try {
-      const newVenue = {
-        venue_name: venue_name,
-        description: description,
-      };
 
+    var from_paxRange = priceFrom.split(",");
+    var to_paxRange = priceTo.split(",");
+    var amount_paxRange = priceAmount.split(",");
+    var contact_paxRange = formState.contact.split(",");
+    var remarks_paxRange = formState.remarks.split(",");
+
+    console.log(from_paxRange[0]);
+
+    for (var i = 0; i < from_paxRange.length; i++) {
+      if (listPrice.length < from_paxRange.length) {
+        listPrice.push(
+          {
+            paxRange: {
+              from: from_paxRange[i],
+              to: to_paxRange[i],
+            },
+            amount: amount_paxRange[i],
+          },
+        );
+      }
+    }
+    console.log(listPrice);
+
+    const data = {
+      'name':formState.name,
+      'capacity':{"max":formState.capacity.max || 0, "min":formState.capacity.min || 0},
+      'additionalService':{"dj":formState.additionalService.dj || 0, "spaceOnly":formState.additionalService.spaceOnly || 0},
+      'location':formState.location,
+      'contact':contact_paxRange,
+      "remarks": remarks_paxRange,
+      "established": formState.established || 0,
+      "venueType": venueType,
+      "spaceIndoor": isSpaceIndoor,
+      "spaceOutdoor": isSpaceOutdoor,
+      "price": listPrice,
+    }
+    try {
       await axios
-        .put(
-          "http://localhost:90/venue/update/" + venueId,
-          newVenue
-        )
-        .then(() => {
-          window.location.replace("/venue");
-          toast.success("Updated successfully");
-        })
-        .catch((e) => {
-          toast.failed("Failed to update");
+        .put("http://localhost:8000/admin/venue/" + venueId, data, config)
+        .then((response) => {
+          window.location.replace("/all_venue");
+          toast.success("Successfully updated");
+          console.log(response.data.msg);
         });
-    } catch (err) {
-      console.log(err);
+    } catch (e) {
+      toast.failed("Failed to update");
+      console.log(e);
+    }
+
+
+    const imageFromData = FormData();
+    imageFromData.append('image',image)
+
+    try {
+      await axios
+        .put("http://localhost:8000/admin/venue/upload/" + venueId, imageFromData, config)
+        .then((response) => {
+          console.log(response.data.msg);
+        });
+    } catch (e) {
+      // toast.failed("Failed to add");
+      console.log(e);
     }
   };
+  const getInitialState = () => {
+    const value = "RESORT";
+    return value;
+  };
+
+  const [value, setValue] = useState(getInitialState);
+
+  const handleChange = (e) => {
+    setValue(e.target.value);
+    setVenueType(e.target.value);
+  };
+
+  const handleFieldChange = (e) => {
+    const { value, name } = e.target;
+    setFormState((prevState) => ({ ...prevState, [name]: value }));
+  };
+
+  const handleCapacityChange = (e) => {
+    const { value, name } = e.target;
+    setFormState((prevState) => ({
+      ...prevState,
+      capacity: { ...prevState.capacity, [name]: value },
+    }));
+  };
+
+  const handleAdditionalChange = (e) => {
+    const { value, name } = e.target;
+    setFormState((prevState) => ({
+      ...prevState,
+      additionalService: { ...prevState.additionalService, [name]: value },
+    }));
+  };
+
   return (
     <>
-      <div className="new">
-        <div className="newContainer mt-1">
-          <div className="top mt-5">
-            <h1 className="text-center pb-5">Update Venue</h1>
-          </div>
-          <div className="bottom">
-            <div className="right">
-            <form class="w-full max-w-lg">
-            <div class="flex flex-wrap -mx-3 -mb-6">
-              <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
-                <label class="block tracking-wide text-gray-700 text-meduim mb-2" for="grid-first-name">
-                  Name
-                </label>
-                <input class="appearance-none block w-full bg-gray-200 text-gray-700 
-                  border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none
-                  focus:bg-white" id="grid-first-name" type="text" placeholder="Enter venue..."
-                  onChange={(e) => setVenue(e.target.value)}
-                 />
-              </div>
-              <div class="w-full md:w-1/2 px-3 -mb-6">
-                <label class="block tracking-wide text-gray-700 text-meduim mb-2" for="grid-last-name">
-                  Description
-                </label>
-                <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded
-                 py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name"
-                  type="Enter description..." placeholder="Enter description..." 
-                  onChange={(e) => setDescription(e.target.value)}
-                  />
+      <div className="ml-10">
+        <div className="px-4 my-5 md:px-15 mx-auto w-full ">
+          <div className="flex flex-wrap">
+            <div className="w-full lg:w-2/12 px-4 ">
+              <div className="relative flex flex-col min-w-0 break-words bg-blueGray-100 w-full mb-6 shadow-xl rounded-lg mt-32">
+                <div className="px-0">
+                  <div className="flex flex-wrap justify-end">
+                    <img
+                      alt="..."
+                      src={
+                        image
+                          ? URL.createObjectURL(image)
+                          : "https://icon-library.com/images/no-image-icon/no-image-icon-0.jpg"
+                      }
+                      style={{
+                        objectFit: "cover",
+                      }}
+                      className="shadow-xl h-auto align-middle rounded-md absolute max-w-200-px"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-              <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 mt-3 rounded inline-flex items-center" onClick={handleClick}>
-              Update Venue
-              </button>
-          </form>
+            <div className="w-full lg:w-7/12 px-4 mt-7">
+              <div className="flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-100 border-0">
+                {/* addition of form started */}
+                <div className="rounded-t bg-gray-50 mb-0 px-6 py-6 border-20">
+                  <div className="text-center flex justify-between ">
+                    <h6 className="text-blueGray-700 text-2xl font-bold">
+                      Update Venue
+                    </h6>
+                    <Link
+                      className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
+                      type="button"
+                      to={""}
+                      onClick={handleClick}
+                    >
+                      Submit
+                    </Link>
+                  </div>
+                </div>
+                <div className="flex-auto px-4 lg:px-10 py-10 pt-0">
+                  <form>
+                    <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                      Complete the fileds..
+                    </h6>
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Name
+                          </label>
+                          <input
+                            type="text"
+                            onChange={handleFieldChange}
+                            name="name"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter venue name"
+                            value={formState.name}
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Established Year
+                          </label>
+                          <input
+                            type="number"
+                            onChange={handleFieldChange}
+                            name="established"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter established year"
+                            value={formState.established}
+
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Contact number
+                          </label>
+                          <input
+                            type="text"
+                            onChange={handleFieldChange}
+                            name="contact"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Seperate numbers with comma"
+                            value={formState.contact}
+
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Type
+                          </label>
+                          <div>
+                            <select
+                              value={value}
+                              onChange={handleChange}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            >
+                              <option value="RESORT">RESORT</option>
+                              <option value="BANQUET">BANQUET</option>
+                              <option value="STADIUM">STADIUM</option>
+                              <option value="NIGHT CLUB">NIGHT CLUB</option>
+                              <option value="ACADEMIC VENUE">
+                                ACADEMIC VENU
+                              </option>
+                              <option value="COMMMUNITY CENTER">
+                                COMMMUNITY CENTER
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-12/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Location
+                          </label>
+                          <input
+                            type="text"
+                            onChange={handleFieldChange}
+                            name="location"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter location"
+                            value={formState.location}
+
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr className="mt-6 border-b-1 border-blueGray-300" />
+
+                    <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                      Additional Information
+                    </h6>
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-12/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Remarks
+                          </label>
+                          <textarea
+                            onChange={handleFieldChange}
+                            name="remarks"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter remarks"
+                            value={formState.remarks}
+
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <h6 className="text-blueGray-400 text-sm mt-3 mb-2 font-bold px-4">
+                      Select capacity
+                    </h6>
+
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Minimum
+                          </label>
+                          <input
+                            type="number"
+                            onChange={handleCapacityChange}
+                            name="min"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter minimum number of people"                            
+                            value={formState.min}
+
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            maximum
+                          </label>
+                          <input
+                            type="number"
+                            onChange={handleCapacityChange}
+                            name="max"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter maximum number of people"
+                            value={formState.max}
+
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <h6 className="text-blueGray-400 text-sm mt-3 mb-2 font-bold px-4">
+                      Pricing
+                    </h6>
+
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-4/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            From (no of people)
+                          </label>
+                          <input
+                            type="text"
+                            onChange={(e) => setFrom(e.target.value)}
+                            name="from"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="From (no of people)"
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-4/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            To (no of people)
+                          </label>
+                          <input
+                            type="text"
+                            onChange={(e) => setTo(e.target.value)}
+                            name="to"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="To (no of people)"
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-4/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Amount
+                          </label>
+                          <input
+                            type="text"
+                            onChange={(e) => setAmount(e.target.value)}
+                            name="amount"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter total amount"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="w-full lg:w-4/12 px-4 mt-3">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Space Indoor ?
+                          </label>
+                          <div class="flex">
+                            <div class="flex items-center mr-4">
+                              <input
+                                id="inline-radio"
+                                type="radio"
+                                value={true}
+                                name="inline-radio-group"
+                                onChange={(e) => setSpaceIndoor(e.target.value)}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                              <label
+                                for="inline-radio"
+                                class="ml-2 text-sm font-medium text-blueGray-500"
+                              >
+                                YES
+                              </label>
+                            </div>
+                            <div class="flex items-center mr-4">
+                              <input
+                                id="inline-2-radio"
+                                type="radio"
+                                value={false}
+                                name="inline-radio-group"
+                                onChange={(e) => setSpaceIndoor(e.target.value)}
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                              <label
+                                for="inline-2-radio"
+                                class="ml-2 text-sm font-medium text-blueGray-500"
+                              >
+                                NO
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full lg:w-4/12 px-4 mt-3">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            Space Outdoor ?
+                          </label>
+                          <div class="flex">
+                            <div class="flex items-center mr-4">
+                              <input
+                                id="inline-radio"
+                                type="radio"
+                                value={true}
+                                name="inline-radio-group-available"
+                                onChange={(e) =>
+                                  setSpaceOutdoor(e.target.value)
+                                }
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                              <label
+                                for="inline-radio"
+                                class="ml-2 text-sm font-medium text-blueGray-500"
+                              >
+                                YES
+                              </label>
+                            </div>
+                            <div class="flex items-center mr-4">
+                              <input
+                                id="inline-2-radio"
+                                type="radio"
+                                value={false}
+                                name="inline-radio-group-available"
+                                onChange={(e) =>
+                                  setSpaceOutdoor(e.target.value)
+                                }
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                              />
+                              <label
+                                for="inline-2-radio"
+                                class="ml-2 text-sm font-medium text-blueGray-500"
+                              >
+                                NO
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr className="mt-2 border-b-1 border-blueGray-300" />
+
+                    <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                      Additional Services (If available)
+                    </h6>
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            DJ (price)
+                          </label>
+                          <input
+                            type="number"
+                            onChange={handleAdditionalChange}
+                            name="dj"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter DJ price"
+                            value={formState.dj}
+
+                          />
+                        </div>
+                      </div>
+                      <div className="w-full lg:w-6/12 px-4">
+                        <div className="relative w-full mb-3">
+                          <label
+                            className="block text-blueGray-600 text-xs font-bold mb-2"
+                            htmlFor="grid-password"
+                          >
+                            SpaceOnly (Price)
+                          </label>
+                          <input
+                            type="number"
+                            onChange={handleAdditionalChange}
+                            name="spaceOnly"
+                            className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                            placeholder="Enter spaceonly price"                            
+                            value={formState.spaceOnly}
+
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr className="mb-4 mt-3 border-b-1 border-blueGray-300" />
+
+                    <div className="flex flex-wrap">
+                      <div className="w-full lg:w-12/12 px-4">
+                        <div className="relative w-full update_profile_image">
+                          <label
+                            className="block uppercase text-blueGray-600 text-xs font-bold"
+                            htmlFor="grid-password"
+                          >
+                            Upload Image
+                          </label>
+                          <label for="file">
+                            <IoMdCloudUpload />
+                            <input
+                              type="file"
+                              id="file"
+                              onChange={(e) => {
+                                setImage(e.target.files[0]);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -101,19 +101,33 @@ const AddVenue = () => {
     }
     console.log(listPrice);
 
-    const formData = new FormData();
-    formData.append("name", formState.name);
-    formData.append("capacity.max", formState.capacity.max || 0);
-    formData.append("capacity.min", formState.capacity.min || 0);
-    formData.append("location", formState.location);
-    formData.append("contact", contact_paxRange);
-    formData.append("remarks", remarks_paxRange);
-    formData.append("established", formState.established || 0);
-    formData.append("venueType", venueType);
-    formData.append("image", image);
-    formData.append("spaceIndoor", isSpaceIndoor);
-    formData.append("spaceOutdoor", isSpaceOutdoor);
-    formData.append("price", listPrice);
+    const data = {
+      'name':formState.name,
+      'capacity':{"max":formState.capacity.max || 0, "min":formState.capacity.min || 0},
+      'additionalService':{"dj":formState.additionalService.dj || 0, "spaceOnly":formState.additionalService.spaceOnly || 0},
+      'location':formState.location,
+      'contact':contact_paxRange,
+      "remarks": remarks_paxRange,
+      "established": formState.established || 0,
+      "venueType": venueType,
+      "spaceIndoor": isSpaceIndoor,
+      "spaceOutdoor": isSpaceOutdoor,
+      "price": listPrice,
+    }
+
+    // const formData = new FormData();
+    // formData.append("name", formState.name);
+    // formData.append("capacity.max", formState.capacity.max || 0);
+    // formData.append("capacity.min", formState.capacity.min || 0);
+    // formData.append("location", formState.location);
+    // formData.append("contact", contact_paxRange);
+    // formData.append("remarks", remarks_paxRange);
+    // formData.append("established", formState.established || 0);
+    // formData.append("venueType", venueType);
+    // formData.append("image", image);
+    // formData.append("spaceIndoor", isSpaceIndoor);
+    // formData.append("spaceOutdoor", isSpaceOutdoor);
+    // formData.append("price", listPrice);
 
     console.log(listPrice)
 
@@ -122,7 +136,7 @@ const AddVenue = () => {
 
     try {
       await axios
-        .post("http://localhost:8000/admin/venue", formData, config)
+        .post("http://localhost:8000/admin/venue", data, config)
         .then((response) => {
           window.location.replace("/all_venue");
           toast.success("Successfully added");
@@ -171,8 +185,7 @@ const AddVenue = () => {
       <div className="ml-10">
         <div className="px-4 my-5 md:px-15 mx-auto w-full ">
           <div className="flex flex-wrap">
-            <div className="w-full lg:w-2/12 px-4 ">
-              {/* image section added */}
+            {/* <div className="w-full lg:w-2/12 px-4 ">
               <div className="relative flex flex-col min-w-0 break-words bg-blueGray-100 w-full mb-6 shadow-xl rounded-lg mt-32">
                 <div className="px-0">
                   <div className="flex flex-wrap justify-end">
@@ -191,8 +204,8 @@ const AddVenue = () => {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="w-full lg:w-7/12 px-4 mt-10">
+            </div> */}
+            <div className="w-full lg:w-7/12 px-4 mt-7">
               <div className="flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-100 border-0">
                 {/* addition of form started */}
                 <div className="rounded-t bg-gray-50 mb-0 px-6 py-6 border-20">
