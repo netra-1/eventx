@@ -9,11 +9,11 @@ import "react-toastify/dist/ReactToastify.css";
 const UpdateVenue = () => {
   const { venueId } = useParams();
 
-//   const config = {
-//     headers: {
-//       Authorization: "Bearer " + localStorage.getItem("adminTicket"),
-//     },
-//   };
+  const config = {
+    headers: {
+      Authorization: localStorage.getItem("token"),
+    },
+  };
 
   const [venue_name, setVenue] = useState("");
   const [description, setDescription] = useState("");

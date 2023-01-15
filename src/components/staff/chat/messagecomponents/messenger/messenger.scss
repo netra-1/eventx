@@ -1,0 +1,163 @@
+$green: #86bb71;
+$blue: #94c2ed;
+$orange: #e38968;
+$gray: #92959e;
+.messenger {
+  display: flex;
+  height: 100vh;
+  gap: 20px;
+  margin: 20px;
+}
+
+.chatMenu {
+  flex: 20%;
+  background-color: #f8f8f8;
+  min-width: 186px;
+  border-radius: 8px;
+}
+
+.chatBoxWrapper {
+  height: 600px;
+  @media only screen and (max-width: 991px) {
+    height: 400px;
+  }
+  padding: 10px;
+}
+
+.chatmenuWrapper {
+  padding: 10px;
+}
+
+.chatBox {
+  flex: 80%;
+  min-height: 500px;
+  padding: 20px;
+  background: #f8f8f8;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.chatBoxWrapper {
+  display: flex;
+  flex-direction: column;
+
+  position: relative;
+}
+
+.chatBoxTop {
+  padding: 20px;
+  overflow-y: scroll;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.chatBoxBottom {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chatMessageInput {
+  width: 100%;
+  height: 40px;
+  padding: 10px;
+}
+
+.chatSubmitButton {
+  margin-top: 10px;
+  width: 70px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+}
+
+.no-conversation {
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  &__img {
+    max-width: 400px;
+  }
+}
+
+@media only screen and (max-width: 991px) {
+  .messenger {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .chatMenu .chatBox {
+    flex: 100%;
+  }
+}
+
+.chat-message {
+  margin-top: 20px;
+
+  textarea {
+    width: 100%;
+    border: 1px solid #fff;
+    outline: none;
+    padding: 10px 20px;
+    font-family: Alata;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    resize: none;
+    background-color: #fff;
+    transition: all 0.3s;
+    &:active,
+    &:focus {
+      border: 1px solid rgb(206, 206, 206);
+    }
+  }
+}
+
+.conversation-users {
+  transition: all 0.2s;
+  border-radius: 8px;
+  &:hover {
+    background-color: rgb(232, 232, 232);
+    border-radius: 8px;
+  }
+  &__active {
+    background-color: rgb(232, 232, 232);
+  }
+}
+
+.conversation-heading {
+  font-size: 16px;
+  text-align: center;
+  font-family: Alata;
+
+  border-bottom: 1px solid grey;
+  padding: 5px;
+}
+
+.search-conversation {
+  position: relative;
+  &__input {
+    width: 100%;
+    margin-bottom: 10px;
+    outline: none;
+    border-radius: 8px;
+    border: 1px solid #e3e1e1;
+    padding: 8px 10px;
+    font-size: 16px;
+    font-family: Alata;
+    &:active,
+    &:focus {
+      border: 1px solid rgb(177, 177, 177);
+    }
+  }
+  &__icon {
+    position: absolute;
+    font-size: 20px;
+    right: 10px;
+    top: 10px;
+    color: #a0a0a0;
+  }
+}

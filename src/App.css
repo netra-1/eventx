@@ -40,3 +40,13 @@
 textarea{
   resize: none;
 }
+
+.update_profile_image input{
+  display: none;
+}
+
+
+.MuiTable-root {
+  /* other styles for the table go here */
+  overflow-y: auto;
+}

@@ -5,15 +5,17 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoMdCloudUpload } from "react-icons/io";
+import { Link } from "react-router-dom";
 
 const UpdateDecoration = () => {
   const { decorationId } = useParams();
 
-//   const config = {
-//     headers: {
-//       Authorization: "Bearer " + localStorage.getItem("adminTicket"),
-//     },
-//   };
+  const config = {
+    headers: {
+      Authorization: localStorage.getItem("token"),
+    },
+  };
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -24,13 +26,14 @@ const UpdateDecoration = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/decoration/" + decorationId)
+      .get("http://localhost:8000/admin/decoration/" + decorationId, config)
       .then((response) => {
         console.log(response);
         setName(response.data.data.name);
         setDescription(response.data.data.description);
         setPrice(response.data.data.price);
         setType(response.data.data.type);
+        setImage(response.data.data.image);
         console.log(response.data.data.name)
       })
       .catch((e) => {
@@ -50,8 +53,8 @@ const UpdateDecoration = () => {
 
       await axios
         .put(
-          "http://localhost:8000/api/decoration/" + decorationId,
-          data
+          "http://localhost:8000/admin/decoration/" + decorationId,
+          data, config
         )
         .then(() => {
           window.location.replace("/decoration");
@@ -66,56 +69,150 @@ const UpdateDecoration = () => {
   };
   return (
     <>
-      <div className="new">
-        <div className="newContainer">
-          <div className="top mt-5">
-            <h1 className="text-center pb-4">Update Decoration</h1>
-          </div>
-          <div className="bottom">
-            <div className="right">
-            <form class="w-full max-w-lg">
-              <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Name
-                  </label>
-                  <input value={name} size="50" onChange={(e) => setName(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter decoration name" />
+      <div className="ml-10">
+        <div className="px-4 my-5 md:px-15 mx-auto w-full ">
+            <div className="flex flex-wrap">
+                <div className="w-full lg:w-2/12 px-4 ">
+                  {/* image section added */}
+                  <div className="relative flex flex-col min-w-0 break-words bg-blueGray-100 w-full mb-6 shadow-xl rounded-lg mt-32">
+                    <div className="px-0">
+                      <div className="flex flex-wrap justify-end">
+                        <img
+                          alt="..."
+                          src={
+                            image
+                                ? image.url || URL.createObjectURL(image)
+                                : "https://icon-library.com/images/no-image-icon/no-image-icon-0.jpg"
+                          }
+                          style={{
+                            objectFit : "cover",
+                          }}
+                          className="shadow-xl h-auto align-middle rounded-md absolute max-w-200-px"
+                        /> 
+                      </div>
+                      
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Type
-                  </label>
-                  <input value={type} onChange={(e) => setType(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter type" />
+                <div className="w-full lg:w-7/12 px-4 mt-10">
+                <div className="flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-100 border-0">
+                  {/* addition of form started */}
+                  <div className="rounded-t bg-gray-50 mb-0 px-6 py-6 border-20">
+                    <div className="text-center flex justify-between ">
+                      <h6 className="text-blueGray-700 text-2xl font-bold">Update Decoration</h6>
+                      <Link
+                        className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
+                        type="button"
+                        to={''}
+                        onClick= {handleClick}
+                      >
+                        Submit
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex-auto px-4 lg:px-10 py-10 pt-0">
+                    <form>
+                      <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                        Complete the fileds..
+                      </h6>
+                      <div className="flex flex-wrap">
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Name
+                            </label>
+                            <input
+                              type="text" onChange={(e) => setName(e.target.value)} value={name}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter decorationy name"
+                            />
+                          </div>
+                        </div>
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Description
+                            </label>
+                            <textarea rows="3" cols="50" onChange={(e) => setDescription(e.target.value)} value={description}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter description"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr className="mt-6 border-b-1 border-blueGray-300" />
+
+                      <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                        Additional Information
+                      </h6>
+                      <div className="flex flex-wrap">
+                      <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Type
+                            </label>
+                            <input
+                              type="text" onChange={(e) => setType(e.target.value)} value={type}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter decoration type"
+                            />
+
+                          </div>
+                        </div>
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Price
+                            </label>
+                            <input
+                              type="number" onChange={(e) => setPrice(e.target.value)} value={price}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter price"
+                            />
+
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr className="mb-4 mt-6 border-b-1 border-blueGray-300" />
+                      
+                      <div className="flex flex-wrap">
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full update_profile_image">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold"
+                              htmlFor="grid-password"
+                            >
+                              Upload Image
+                            </label>
+                            <label for="file">
+                              <IoMdCloudUpload />
+                              <input type="file" id="file" onChange={(e) => {
+                                    setImage(e.target.files[0]);
+                                  }} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                    </form>
+                  </div>
                 </div>
-              </div>
-              <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Description
-                  </label>
-                  <textarea rows={3} cols={50} value={description} onChange={(e) => setDescription(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter description" />
                 </div>
-              </div>
-              <div class="flex flex-wrap -mx-3 mb-3">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Price
-                  </label>
-                  <input value={price} size="50" onChange={(e) => setPrice(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="number" placeholder="Enter price" />
-                </div>
-              </div>
-              <input 
-              onChange={(e) => setImage(e.target.files[0])} 
-              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file"/>
-            
-            </form>
-              <button class="mt-5 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 mt-3 rounded inline-flex items-center" onClick={handleClick}>
-              Update Decoration
-              </button>
             </div>
-          </div>
         </div>
       </div>
       <ToastContainer

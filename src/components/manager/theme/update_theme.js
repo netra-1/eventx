@@ -8,6 +8,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { IconButton } from '@mui/material';
 import { AiFillMinusCircle } from "react-icons/ai";
 import { HiPlusCircle } from "react-icons/hi";
+import { IoMdCloudUpload } from "react-icons/io";
+import { Link } from "react-router-dom";
 
 const UpdateTheme = () => {
   const { themeId } = useParams();
@@ -17,14 +19,21 @@ const UpdateTheme = () => {
   const [speciality, setSpeciality] = useState([]);
   const [image, setImage] =useState("");
 
+  const config = {
+    headers: {
+      Authorization: localStorage.getItem("token"),
+    },
+  };
+
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/theme/" + themeId)
+      .get("http://localhost:8000/admin/theme/" + themeId, config)
       .then((response) => {
         console.log(response);
         setName(response.data.data.name);
         setDescription(response.data.data.description);
+        setImage(response.data.data.image);
       })
       .catch((e) => {
         console.log(e);
@@ -42,8 +51,8 @@ const UpdateTheme = () => {
 
       await axios
         .put(
-          "http://localhost:8000/api/theme/" + themeId,
-          data
+          "http://localhost:8000/admin/theme/" + themeId,
+          data, config
         )
         .then(() => {
           window.location.replace("/theme");
@@ -77,60 +86,139 @@ const UpdateTheme = () => {
 
   return (
     <>
-      <div className="new">
-        <div className="newContainer mt-5">
-          <div className="top mb-5">
-            <h1 className="text-center pb-4">Update Theme</h1>
-          </div>
-          <div className="bottom mt-3">
-            <div className="right">
-            <form class="w-full max-w-lg">
-              <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Name
-                  </label>
-                  <input size="50" value={name} onChange={(e) => setName(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter theme" />
-                </div>
-              </div>
-              <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Description
-                  </label>
-                  <textarea rows="3" cols="50" value={description} onChange={(e) => setDescription(e.target.value)} class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter description" />
-                </div>
-              </div>
-
-                <div class="flex flex-wrap -mx-3 -mb-6">
-                <div class="w-full md:w1/2 px-3 md:mb-0">
-                  <label class="block tracking-wide text-gray-700 text-m font-bold mb-2" for="grid-first-name">
-                    Speciality
-                  </label>
-              {speciality.map((val, index) => (
-                  <div className="flex">
-                    <input size="45" onChange={handleSpecialityChange} value={val} name={index} class="me-2 appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-300 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="grid-first-name" type="text" placeholder="Enter speciality" />
-                    <IconButton onClick={removeSpeciality(index)} color="primary" aria-label="minus button">
-                      <AiFillMinusCircle />
-                    </IconButton>
+      <div className="ml-10">
+        <div className="px-4 my-5 md:px-15 mx-auto w-full ">
+            <div className="flex flex-wrap">
+                <div className="w-full lg:w-2/12 px-4 ">
+                  {/* image section added */}
+                  <div className="relative flex flex-col min-w-0 break-words bg-blueGray-100 w-full mb-6 shadow-xl rounded-lg mt-32">
+                    <div className="px-0">
+                      <div className="flex flex-wrap justify-end">
+                        <img
+                          alt="..."
+                          src={
+                            image
+                                ? image.url || URL.createObjectURL(image)
+                                : "https://icon-library.com/images/no-image-icon/no-image-icon-0.jpg"
+                          }
+                          style={{
+                            objectFit : "cover",
+                          }}
+                          className="shadow-xl h-auto align-middle rounded-md absolute max-w-200-px"
+                        /> 
+                      </div>
+                      
                     </div>
-                    ))}
-                    <IconButton onClick={addSpeciality} color="primary" aria-label="add button">
-                      <HiPlusCircle />
-                    </IconButton>
                   </div>
                 </div>
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload file</label>
-              <input 
-              onChange={(e) => setImage(e.target.files[0])} 
-              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file"/>
+                <div className="w-full lg:w-7/12 px-4 mt-10">
+                <div className="flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-100 border-0">
+                  {/* addition of form started */}
+                  <div className="rounded-t bg-gray-50 mb-0 px-6 py-6 border-20">
+                    <div className="text-center flex justify-between ">
+                      <h6 className="text-blueGray-700 text-2xl font-bold">Update Theme</h6>
+                      <Link
+                        className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
+                        type="button"
+                        to={''}
+                        onClick= {handleClick}
+                      >
+                        Submit
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex-auto px-4 lg:px-10 py-10 pt-0">
+                    <form>
+                      <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                        Complete the fileds..
+                      </h6>
+                      <div className="flex flex-wrap">
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Name
+                            </label>
+                            <input
+                              type="text" onChange={(e) => setName(e.target.value)} value={name}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter theme name"
+                            />
+                          </div>
+                        </div>
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Description
+                            </label>
+                            <textarea rows="3" cols="50" onChange={(e) => setDescription(e.target.value)}  value={description}
+                              className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+                              placeholder="Enter description"
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-              <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 mt-3 rounded inline-flex items-center" onClick={handleClick}>
-              Update Theme
-              </button>
-            </form>
+                      <hr className="mt-6 border-b-1 border-blueGray-300" />
+
+                      <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
+                        Additional Information
+                      </h6>
+                      <div className="flex flex-wrap">
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full mb-3">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+                              htmlFor="grid-password"
+                            >
+                              Speciality
+                            </label>
+                            {speciality.map((val, index) => (
+                            <div className="flex">
+                                <input onChange={handleSpecialityChange} value={val} name={index} class="me-2 mb-3 border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150" />
+                                <IconButton onClick={removeSpeciality(index)} color="primary" aria-label="minus button">
+                                  <AiFillMinusCircle />
+                                </IconButton>
+                              </div>
+                              ))}
+                              <IconButton onClick={addSpeciality} color="primary" aria-label="add button">
+                                <HiPlusCircle />
+                              </IconButton>
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr className="mb-4 border-b-1 border-blueGray-300" />
+                      
+                      <div className="flex flex-wrap">
+                        <div className="w-full lg:w-12/12 px-4">
+                          <div className="relative w-full update_profile_image">
+                            <label
+                              className="block uppercase text-blueGray-600 text-xs font-bold"
+                              htmlFor="grid-password"
+                            >
+                              Upload Image
+                            </label>
+                            <label for="file">
+                              <IoMdCloudUpload />
+                              <input type="file" id="file" onChange={(e) => {
+                                    setImage(e.target.files[0]);
+                                  }} />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                    </form>
+                  </div>
+                </div>
+                </div>
             </div>
-          </div>
         </div>
       </div>
       <ToastContainer
