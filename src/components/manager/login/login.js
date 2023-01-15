@@ -4,14 +4,10 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logo from '../../../assets/img/register_bg_2.png'
-import { ImportantDevices } from "@mui/icons-material";
-import { useSocket } from "../../../context/socket";
 
 const AdminLogin = () =>{
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    
-    const {initializeSocket} = useSocket()
 
     const loginAdmin=(e)=>{
     e.preventDefault();
@@ -32,7 +28,6 @@ const AdminLogin = () =>{
             console.log(response.data.data.user.category)
             console.log(response.data.data.user._id)
         if (response.data.data.token) {
-          initializeSocket()
           toast.success("Login success!");
             // it will save the token locally, so that it is available
             // all over the component
@@ -138,7 +133,7 @@ const AdminLogin = () =>{
                 </form>
               </div>
             </div>
-            
+
           </div>
         </div>
       </div>
@@ -154,7 +149,7 @@ const AdminLogin = () =>{
         pauseOnFocusLoss
         draggable
         pauseOnHover
-      /> 
+      />
         </>
     )
 }
