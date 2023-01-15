@@ -3,12 +3,10 @@ import { useEffect, useRef } from "react";
 import { useState } from "react";
 import ChatUserItem from "../conversation/conversation";
 import Message from "../Message/Message";
-import { MdSend } from "react-icons/md";
 import "./messenger.scss";
 import axios from "axios";
-import { io } from "socket.io-client";
-// import no_conversation from "../../assets/no_conversation.svg";
-import { BiSearch } from "react-icons/bi";
+import no_conversation from '../../../../../assets/img/no_conversation.png';
+import {useSocket} from "../../../../../context/socket";
 
 const Messenger = () => {
   const [userList, setUserList] = useState([]);
@@ -17,45 +15,17 @@ const Messenger = () => {
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [arrivalMessage, setArrivalMessage] = useState(null);
+  const [newMessageReceivedUsers, setNewMessageReceivedUsers] = useState([])
 
   const scrollRef = useRef();
+
+  const { sendMessage, receivedMessage } = useSocket()
 
   const config = {
     headers : {
         Authorization : localStorage.getItem('token'),
     }
   }
-
-  const socket = useRef();
-  const user = localStorage.getItem("staff_id");
-
-  // useEffect(() => {
-  //   socket.current = io("ws://localhost:8011");
-  //   socket.current.on('connect', () => {console.log('CONNECTED');})
-  //   socket.current.on("msg-receive", (data) => {
-  //     console.log('msg-receive: ', data);
-  //     setArrivalMessage({
-  //       sender: data.senderusername,
-  //       text: data.text,
-  //       createdAt: Date.now(),
-  //     });
-  //   });
-  // }, []);
-
-  // useEffect(() => {
-  //   arrivalMessage &&
-  //     currentChat?.members.includes(arrivalMessage.sender) &&
-  //     setMessages((prev) => [...prev, arrivalMessage]);
-  //   console.log(currentChat);
-  // }, [arrivalMessage, currentChat]);
-
-  // useEffect(() => {
-  //   socket.current.emit("add-user", user);
-  //   socket.current.on("getUsers", (users) => {
-  //     console.log(users);
-  //   });
-  // }, [user]);
 
   useEffect(() => {
     (async () => {
@@ -65,11 +35,20 @@ const Messenger = () => {
 
       if(res.data.success){
         setUserList(res.data.data.chatUserList)
+        setAllConversations(res.data.data.chatUserList)
       }
     })()
-    socket.current = io("ws://localhost:8011");
-    socket.current.on('connect', () => {console.log('CONNECTED');})
   }, []);
+
+  useEffect(() => {
+    if(receivedMessage){
+      if(currentChat?._id === receivedMessage.sender){
+        setMessages(prevState => ([...prevState, receivedMessage]));
+      }else{
+        setNewMessageReceivedUsers(prevState => ([...prevState, receivedMessage.sender]))
+      }
+    }
+  }, [receivedMessage])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,6 +63,7 @@ const Messenger = () => {
           message,
           config
         );
+        sendMessage(message.message, message.to)
         setMessages(prevState => ([...prevState, res.data.data]));
         setNewMessage("");
       } catch (e) {
@@ -99,8 +79,7 @@ const Messenger = () => {
   const searchConversation = (searchQuery) => {
     const searchResult = allConversations.filter(
       (c) =>
-        c.members[0].toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.members[1].toLowerCase().includes(searchQuery.toLowerCase())
+        c.members.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setUserList(searchResult);
 
@@ -118,6 +97,9 @@ const Messenger = () => {
 
       if(res.data.success){
         setMessages(res.data.data)
+        if(newMessageReceivedUsers.includes(userItem._id)){
+          setNewMessageReceivedUsers(prevState => (prevState.filter(user => user !== userItem._id)))
+        }
       }
   }
 
@@ -128,35 +110,46 @@ const Messenger = () => {
           <p className="conversation-heading"> Conversations</p>
 
           <div className="chatmenuWrapper">
-            <div className="search-conversation">
+            {/* <div className="search-conversation">
               <input
                 className="search-conversation__input"
-                placeholder="username"
+                placeholder="name"
                 onChange={(e) => searchConversation(e.target.value)}
               />
               <BiSearch className="search-conversation__icon" />
-            </div>
-            {userList.map((userItem) => (
-              <div
-                key={userItem._id}
-                onClick={handleUserItemClick(userItem)}
-                data-test="sender-btn"
-                className={`${
-                  currentChat === userItem && "conversation-users__active"
-                } conversation-users`}
-              >
-                <ChatUserItem userItem={userItem} />
-              </div>
-            ))}
+            </div> */}
+            {userList.map((userItem) => {
+              const hasNewMsg = newMessageReceivedUsers.includes(userItem._id)
+              return (
+                  <div
+                      key={userItem._id}
+                      onClick={handleUserItemClick(userItem)}
+                      data-test="sender-btn"
+                      className={`${
+                          currentChat === userItem ? "conversation-users__active" : ''
+                      } conversation-users ${hasNewMsg ? 'conversation-users__new-message' : ''}`}
+                  >
+                    {hasNewMsg && (
+                        <span className={'new-message-count'}>{newMessageReceivedUsers.filter(user => user === userItem._id).length}</span>
+                    )}
+                    <ChatUserItem userItem={userItem} />
+                  </div>
+              )
+            })}
           </div>
         </div>
         <div className="chatBox">
           <div className="chatBoxWrapper">
             {currentChat ? (
               <>
-              <div>
-                {currentChat.profile.fullName}
-              </div>
+                <div className='pb-2 flex'>
+                  <img
+                    className="conversationImg"
+                    src={currentChat.image.url}
+                    alt="PP"
+                  />
+                  {currentChat.profile.fullName}
+                </div>
                 <div className="chatBoxTop" style={{minHeight: '500px'}}>
                   {messages.map((msg) => (
                     <div ref={scrollRef}>
@@ -167,10 +160,17 @@ const Messenger = () => {
                     </div>
                   ))}
                 </div>
-
                 <div class="chat-message clearfix">
                   <form className="chat__form" onSubmit={handleSubmit}>
-                    <input
+                  <div class="grid gap-6 mb-6 md:grid-cols-2">
+                      <input type="text" name='message-to-send'
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                      }}
+                      value={newMessage} id="message-to-send" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:white dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-900 dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter your message" required />
+
+
+                    {/* <input
                       className="chat__input"
                       name="message-to-send"
                       id="message-to-send"
@@ -181,21 +181,24 @@ const Messenger = () => {
                       }}
                       value={newMessage}
                       data-test="text"
-                    />{" "}
-                    <button
-                      className="chat__btn"
+                    /> */}
+                    {" "}
+                    <div>
+                      <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                       type="submit"
                       data-test="send-btn"
                     >
-                      Send message <MdSend />
-                    </button>
+                      Send message
+                    </button></div>
+                    </div>
                   </form>
                 </div>
               </>
             ) : (
               <span className="no-conversation">
                 <img
-                  src={"https://static.vecteezy.com/system/resources/previews/005/266/444/original/no-messages-or-notifications-yet-concept-illustration-flat-design-eps10-modern-graphic-element-for-landing-page-empty-state-ui-infographic-icon-vector.jpg"}
+                  src={no_conversation}
                   alt="no_conversation"
                   className="no-conversation__img"
                 />

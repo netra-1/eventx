@@ -10,7 +10,7 @@ export default function ChatUserItem({ userItem }) {
         src={userItem.image.url}
         alt="PP"
       />
-      <span className="conversationName">{userItem.profile.fullName}</span>
+      <span className="conversationName text-lg">{userItem.profile.fullName}</span>
     </div>
   );
 }

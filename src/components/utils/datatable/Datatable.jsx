@@ -14,7 +14,6 @@ const Datatable = ({columns, apipath}) => {
   const [list, setList] = useState({});
   const { data, loading, error } = useFetch(`http://localhost:8000/admin/${apipath || path}/`);
   const [catIdForRoom, setCatIdForRoom] = useState('');
-  const [isAccess, setIsAccess] = useState('');
 
   const config = {
     headers : {
@@ -23,11 +22,6 @@ const Datatable = ({columns, apipath}) => {
   }
   useEffect(() => {
     setList(data);
-    // console.log(data)
-    data.map((user)=>{
-      setIsAccess(user.access)
-      console.log(isAccess)
-    })
   }, [data]);
 
 
@@ -135,7 +129,7 @@ const Datatable = ({columns, apipath}) => {
                   <Link style={{ textDecoration: "none" }} to={'/staff/single_event/' + params.row._id}>
                     <div className="viewButton">View</div>
                   </Link>
-                  
+
                   {
                     params.row.assignedStaff ?
                     <div></div>
@@ -156,7 +150,7 @@ const Datatable = ({columns, apipath}) => {
                   <Link style={{ textDecoration: "none" }} to={'/staff/single_event/' + params.row._id}>
                     <div className="viewButton">View</div>
                   </Link>
-                  
+
                   {
                     params.row.assignedStaff ?
                     <div></div>
@@ -242,7 +236,7 @@ const Datatable = ({columns, apipath}) => {
                   </div>
                   </>
                   )}
-                  
+
                 </div>
               )
             }
@@ -382,11 +376,11 @@ const Datatable = ({columns, apipath}) => {
                   getRowId={(row) => row._id}
                 />
                 </>
-                
+
               )
             }
           })()}
-      
+
     </div>
     <ToastContainer
           position="top-center"

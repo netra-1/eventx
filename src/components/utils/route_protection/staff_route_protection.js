@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import {SocketProvider} from "../../../context/socket";
 
 function StaffPrivateRoute({ children }) {
     var isAuth;
@@ -8,7 +9,13 @@ function StaffPrivateRoute({ children }) {
   else{
       isAuth= false
   }
-  return isAuth ? children : <Navigate to="/" />;
+  return isAuth
+      ? (
+          <SocketProvider>
+              <>{children}</>
+          </SocketProvider>
+      )
+      : <Navigate to="/" />;
 }
 
 export default StaffPrivateRoute;

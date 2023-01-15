@@ -1,28 +1,38 @@
-import { createContext, useContext, useEffect, useRef } from "react";
+import {createContext, useContext, useEffect, useRef, useState} from "react";
 import {io} from 'socket.io-client'
 
-const SocketContext = createContext({ instance: null})
+const SocketContext = createContext({})
+const socketIO = io('ws://localhost:8011')
 
+const staffId = localStorage.getItem('staff_id')
+
+socketIO.on('connect', () => {
+    console.log('socket connected');
+    socketIO.emit('add-user', staffId)
+})
+socketIO.on('disconnect', () => {
+    console.log('socket dis-connected');
+})
 export const SocketProvider = ({children}) => {
 
-    const socketRef = useRef(null)
+    const socketRef = useRef(socketIO)
 
-    useEffect(() => {
-        if(!socketRef.current){
-            const socketIO = io('http://localhost:8011')
+    const [receivedMessage, setReceivedMessage] = useState(null)
 
-            socketIO.on('connect', () => {
-                socketRef.current = socketIO
-                console.log('socket connected');
-            })
-            socketIO.on('disconnect', () => {
-                console.log('socket dis-connected');
-            })
-        }
-    }, [socketRef])
+    const sendMessage = (message, to) => {
+        socketIO.emit('send-msg', ({ to, from: staffId, message }))
+    }
+
+    socketIO.on('msg-receive', (data) => {
+        setReceivedMessage(data)
+        const tempTimout = setTimeout(() => {
+            setReceivedMessage(null)
+            clearTimeout(tempTimout)
+        }, 100)
+    })
 
     return (
-        <SocketContext.Provider value={{instance: socketRef.current}}>
+        <SocketContext.Provider value={{ instance: socketRef.current, sendMessage, receivedMessage }}>
             {children}
         </SocketContext.Provider>
     )
